@@ -50,13 +50,9 @@ func runExec(cmd *cobra.Command, args []string) error {
 	}
 
 	// Build environment: inherit current env, then overlay project vars
-	environ := os.Environ()
-	for _, v := range vars {
-		val, err := store.Get(project, v.Name)
-		if err != nil {
-			return fmt.Errorf("failed to get var %q: %w", v.Name, err)
-		}
-		environ = append(environ, fmt.Sprintf("%s=%s", v.Name, val))
+	environ, err := buildEnviron(store, project, vars)
+	if err != nil {
+		return err
 	}
 
 	binary, err := exec.LookPath(cmdArgs[0])
@@ -65,4 +61,19 @@ func runExec(cmd *cobra.Command, args []string) error {
 	}
 
 	return syscall.Exec(binary, cmdArgs, environ)
+}
+
+// buildEnviron constructs the environment slice for the child process by
+// starting with the current process environment and appending the resolved
+// values of all project variables, allowing them to override inherited vars.
+func buildEnviron(store *env.Store, project string, vars []env.Var) ([]string, error) {
+	environ := os.Environ()
+	for _, v := range vars {
+		val, err := store.Get(project, v.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get var %q: %w", v.Name, err)
+		}
+		environ = append(environ, fmt.Sprintf("%s=%s", v.Name, val))
+	}
+	return environ, nil
 }

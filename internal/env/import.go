@@ -19,6 +19,12 @@ type ImportResult struct {
 // ImportFromDotenv reads key=value pairs from a .env-formatted reader and
 // stores each variable under the given project. Existing variables are
 // overwritten unless skipExisting is true.
+//
+// Supported line formats:
+//   - KEY=value
+//   - KEY="quoted value"
+//   - # comment lines (ignored)
+//   - blank lines (ignored)
 func ImportFromDotenv(s Store, project string, r io.Reader, skipExisting bool) (ImportResult, error) {
 	if err := validateProject(project); err != nil {
 		return ImportResult{}, err
@@ -72,4 +78,11 @@ func ImportFromFile(s Store, project, path string, skipExisting bool) (ImportRes
 	}
 	defer f.Close()
 	return ImportFromDotenv(s, project, f, skipExisting)
+}
+
+// Summary returns a human-readable one-line description of the import result,
+// e.g. "imported 3, skipped 1, errors 0".
+func (r ImportResult) Summary() string {
+	return fmt.Sprintf("imported %d, skipped %d, errors %d",
+		len(r.Imported), len(r.Skipped), len(r.Errors))
 }

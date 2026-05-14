@@ -36,18 +36,9 @@ func runTemplate(cmd *cobra.Command, args []string) error {
 	filePath, _ := cmd.Flags().GetString("file")
 	listOnly, _ := cmd.Flags().GetBool("list")
 
-	var src string
-	if filePath != "" {
-		data, err := os.ReadFile(filePath)
-		if err != nil {
-			return fmt.Errorf("reading template file: %w", err)
-		}
-		src = string(data)
-	} else {
-		if len(args) < 2 {
-			return fmt.Errorf("provide a template string or use --file")
-		}
-		src = args[1]
+	src, err := resolveTemplateSource(args, filePath)
+	if err != nil {
+		return err
 	}
 
 	if listOnly {
@@ -77,4 +68,20 @@ func runTemplate(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Fprint(cmd.OutOrStdout(), out)
 	return nil
+}
+
+// resolveTemplateSource returns the template string from either the --file flag
+// or the inline argument. It returns an error if neither is provided.
+func resolveTemplateSource(args []string, filePath string) (string, error) {
+	if filePath != "" {
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return "", fmt.Errorf("reading template file: %w", err)
+		}
+		return string(data), nil
+	}
+	if len(args) < 2 {
+		return "", fmt.Errorf("provide a template string or use --file")
+	}
+	return args[1], nil
 }

@@ -34,6 +34,15 @@ func runImport(cmd *cobra.Command, args []string) error {
 	project := args[0]
 	filePath := args[1]
 
+	// Verify the file exists and is readable before opening the keychain,
+	// so we fail fast with a clear message if the path is wrong.
+	if _, err := os.Stat(filePath); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("import: file not found: %s", filePath)
+		}
+		return fmt.Errorf("import: cannot access file %s: %w", filePath, err)
+	}
+
 	kc, err := keychain.New()
 	if err != nil {
 		return fmt.Errorf("keychain: %w", err)

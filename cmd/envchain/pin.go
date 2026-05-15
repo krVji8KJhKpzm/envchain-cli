@@ -10,6 +10,7 @@ import (
 	"github.com/yourorg/envchain-cli/internal/keychain"
 )
 
+// newPinStore creates a PinStore backed by the system keychain for the given project.
 func newPinStore(project string) (*env.PinStore, error) {
 	kc, err := keychain.New()
 	if err != nil {
@@ -61,7 +62,7 @@ func runPinSet(project, varName string) error {
 		return err
 	}
 	if err := ps.Pin(varName); err != nil {
-		return fmt.Errorf("pin: %w", err)
+		return fmt.Errorf("pin %q in project %q: %w", varName, project, err)
 	}
 	fmt.Fprintf(os.Stdout, "pinned %s in project %s\n", varName, project)
 	return nil
@@ -73,7 +74,7 @@ func runPinRemove(project, varName string) error {
 		return err
 	}
 	if err := ps.Unpin(varName); err != nil {
-		return fmt.Errorf("unpin: %w", err)
+		return fmt.Errorf("unpin %q in project %q: %w", varName, project, err)
 	}
 	fmt.Fprintf(os.Stdout, "unpinned %s in project %s\n", varName, project)
 	return nil
@@ -86,7 +87,7 @@ func runPinList(project string) error {
 	}
 	pinned, err := ps.ListPinned()
 	if err != nil {
-		return fmt.Errorf("list pinned: %w", err)
+		return fmt.Errorf("list pinned in project %q: %w", project, err)
 	}
 	if len(pinned) == 0 {
 		fmt.Fprintln(os.Stdout, "no pinned variables")

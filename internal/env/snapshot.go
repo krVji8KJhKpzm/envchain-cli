@@ -82,3 +82,21 @@ func (ss *SnapshotStore) Restore(project string, idx int) error {
 	}
 	return nil
 }
+
+// Delete removes the snapshot at index idx (0-based, oldest first) for the
+// given project. Returns an error if the index is out of range.
+func (ss *SnapshotStore) Delete(project string, idx int) error {
+	snaps := ss.List(project)
+	if idx < 0 || idx >= len(snaps) {
+		return fmt.Errorf("snapshot index %d out of range (have %d)", idx, len(snaps))
+	}
+	// List returns a sorted copy; rebuild the stored slice without the target.
+	result := make([]Snapshot, 0, len(snaps)-1)
+	for i, s := range snaps {
+		if i != idx {
+			result = append(result, s)
+		}
+	}
+	ss.snaps[project] = result
+	return nil
+}

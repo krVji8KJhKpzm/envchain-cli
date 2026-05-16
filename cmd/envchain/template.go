@@ -72,16 +72,20 @@ func runTemplate(cmd *cobra.Command, args []string) error {
 
 // resolveTemplateSource returns the template string from either the --file flag
 // or the inline argument. It returns an error if neither is provided.
+// When a file path is given, it takes precedence over any inline argument.
 func resolveTemplateSource(args []string, filePath string) (string, error) {
 	if filePath != "" {
 		data, err := os.ReadFile(filePath)
 		if err != nil {
-			return "", fmt.Errorf("reading template file: %w", err)
+			return "", fmt.Errorf("reading template file %q: %w", filePath, err)
 		}
 		return string(data), nil
 	}
 	if len(args) < 2 {
-		return "", fmt.Errorf("provide a template string or use --file")
+		return "", fmt.Errorf("provide a template string as the second argument or use --file")
+	}
+	if strings.TrimSpace(args[1]) == "" {
+		return "", fmt.Errorf("template string must not be empty")
 	}
 	return args[1], nil
 }
